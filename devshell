@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+project_name="new-project"
+
+script_dir=$(dirname $(readlink -f $0))
+base_dir=$(git rev-parse --show-toplevel)
+
+dockerfile=$script_dir/Dockerfile
+dockerfile_mtime=$(stat -c %Y $dockerfile)
+
+image_name="$project_name-dev:latest"
+need_to_build=true
+
+if [[ -n $(docker images -q $image_name) ]]; then
+  image_mtime=$(docker image inspect $image_name | jq ".[0].Created" | xargs date +%s -d)
+  if [[ $image_mtime -gt $dockerfile_mtime ]]; then
+    need_to_build=false
+  fi
+fi
+
+if $need_to_build; then
+  echo "Building docker image..."
+  docker build -t $image_name $script_dir
+fi
+
+docker_opts=${DEVSHELL_DOCKER_OPTS:-"-it"}
+
+exec docker run --rm $docker_opts \
+  --volume $base_dir:$base_dir \
+  --volume ~/.zprezto:/usr/local/lib/prezto:ro \
+  --volume ${project_name}-dev-home:/home/user \
+  --env HOST_PROJECT_DIR=$base_dir \
+  ${project_name}-dev \
+  "$@"
