@@ -1,3 +1,17 @@
+# Features
+
+* Your **project directory** (from the git root) is available in the container.
+* Runs as a **non-root user**.
+* Runs with the **same UID and GID** as your project root directory. (No more
+  files owned by root or other weird UIDs!)
+* Your project directory path is the **same inside and outside** the container.
+  (Solves a lot of headaches with LSPs!)
+* Sets up **ASDF** so you can run the right versions of all your tools.
+* Uses a docker volume for the container user's home directory, so that **cached
+  artefacts** can be reused later.
+* The image is **automatically rebuilt** when running the devshell after modifying
+  one of the source files.
+
 # Usage
 
 * Create a `.local` directory in the project I'm working on, and copy this
@@ -46,20 +60,6 @@ Also be sure to check `entrypoint-user.sh`, which can be used to set up
 project-specific tooling for the non-root user.
 
 Any system packages you need should be added to the Dockerfile.
-
-# Features
-
-* Your **project directory** (from the git root) is available in the container.
-* Runs as a **non-root user**.
-* Runs with the **same UID and GID** as your project root directory. (No more
-  files owned by root or other weird UIDs!)
-* Your project directory path is the **same inside and outside** the container.
-  (Solves a lot of headaches with LSPs!)
-* Sets up **ASDF** so you can run the right versions of all your tools.
-* Uses a docker volume for the container user's home directory, so that **cached
-  artefacts** can be reused later.
-* The image is **automatically rebuilt** when running the devshell after modifying
-  one of the source files.
 
 # Examples
 
