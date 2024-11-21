@@ -7,7 +7,8 @@ RUN useradd --create-home makepkg \
 USER makepkg
 RUN curl https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz | tar -C /home/makepkg -xz \
       && cd /home/makepkg/yay \
-      && makepkg -sri --noconfirm
+      && makepkg -sri --noconfirm \
+      && sudo rm -f /var/cache/pacman/pkg/*
 
 # AUR Packages
 RUN yay --noconfirm --removemake -S \
