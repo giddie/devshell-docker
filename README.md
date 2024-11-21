@@ -52,6 +52,11 @@ uid=1000(user) gid=100(user) groups=100(user)
 
 ## Customisation
 
+The Dockerfile on the default branch is Archlinux-based. Check out the `ubuntu`
+branch for an Ubuntu-based devshell. Generally, apart from the Dockerfile not
+much needs to change when you use a different base image. Some care may need to
+be taken in `entrypoint.sh` that the user and group are set up correctly.
+
 Be sure to check the volumes that are mounted at the bottom of `devshell`. I
 mount my local ZSH config. You may want to make some other host config available
 in a similar way.
