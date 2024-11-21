@@ -8,14 +8,20 @@ USER makepkg
 RUN curl https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz | tar -C /home/makepkg -xz \
       && cd /home/makepkg/yay \
       && makepkg -sri --noconfirm
-RUN yay -S gosu --noconfirm --removemake
+
+# AUR Packages
+RUN yay --noconfirm --removemake -S \
+  gosu \
+  && sudo rm -f /var/cache/pacman/pkg/*
+
 USER root
 RUN rm /etc/sudoers.d/makepkg \
   && userdel -r makepkg
 
+# Pacman Packages
 RUN pacman -Syu --noconfirm \
-  zsh
-RUN rm -f /var/cache/pacman/pkg/*
+  zsh \
+  && rm -f /var/cache/pacman/pkg/*
 
 COPY entrypoint.sh /usr/local/bin
 COPY entrypoint-user.sh /usr/local/bin
