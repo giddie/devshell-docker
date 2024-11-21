@@ -7,15 +7,24 @@ project_name="new-project"
 script_dir=$(dirname $(readlink -f $0))
 base_dir=$(git rev-parse --show-toplevel)
 
-dockerfile=$script_dir/Dockerfile
-dockerfile_mtime=$(stat -c %Y $dockerfile)
+image_source_files=(
+  Dockerfile
+  entrypoint.sh
+  entrypoint-user.sh
+)
+image_source_mtime=$(
+  for file in ${image_source_files[@]}; do
+    stat -c %Y $script_dir/$file
+  done \
+  | sort -nr | head -n1
+)
 
 image_name="$project_name-dev:latest"
 need_to_build=true
 
 if [[ -n $(docker images -q $image_name) ]]; then
   image_mtime=$(docker image inspect $image_name | jq ".[0].Created" | xargs date +%s -d)
-  if [[ $image_mtime -gt $dockerfile_mtime ]]; then
+  if [[ $image_mtime -gt $image_source_mtime ]]; then
     need_to_build=false
   fi
 fi
