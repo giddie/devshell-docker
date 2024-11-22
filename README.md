@@ -1,4 +1,4 @@
-This provides is a transient, well-defined, and isolated environment for
+This provides a transient, well-defined, and isolated environment for
 development. The goal is to provide a way to run your tools with full access to
 your project directory and nothing else, in as transparent a way as possible,
 and to expose a clean system environment to the wrapped tools to avoid
