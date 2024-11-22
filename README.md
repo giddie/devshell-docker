@@ -1,11 +1,24 @@
+This provides is a transient, well-defined, and isolated environment for
+development. The goal is to provide a way to run your tools with full access to
+your project directory and nothing else, in as transparent a way as possible,
+and to expose a clean system environment to the wrapped tools to avoid
+unpleasant version conflicts and similar complications.
+
+```
+# devshell cargo build
+...        <-- Everything compiles inside a temporary container
+```
+
 # Features
 
-* Your **project directory** (from the git root) is available in the container.
-* Runs as a **non-root user**.
-* Runs with the **same UID and GID** as your project root directory. (No more
-  files owned by root or other weird UIDs!)
+* Your **project directory** (from the git root) is available (read-write) in
+  the container.
+* Runs as a **non-root user** with **sudo access**. A password is set, to avoid
+  tools switching to root without your knowledge. (The password is: `secret`.)
+* Runs with the **same UID and GID** as your project root directory. (No
+  root-owned files will appear in your project directory!)
 * Your project directory path is the **same inside and outside** the container.
-  (Solves a lot of headaches with LSPs!)
+  (This solves a lot of headaches with LSPs!)
 * Sets up **ASDF** so you can run the right versions of all your tools.
 * Uses a docker volume for the container user's home directory, so that **cached
   artefacts** can be reused later.
@@ -14,8 +27,8 @@
 
 # Usage
 
-* Create a `.local` directory in the project I'm working on, and copy this
-  template into `.local/devshell`.
+* Create a `.local` directory in the project root, and copy this template into
+  `.local/devshell`.
 * Set the `project_name` in the `devshell` script. This determines the name of
   the docker image and volume.
 * Create a `.local/bin` directory and add it to `PATH` with a `.envrc`
@@ -39,7 +52,7 @@ PATH_add .local/bin
     └── ...
 ```
 
-Then I run commands like this:
+Then run commands like this:
 
 ```
 # ds echo hello world
