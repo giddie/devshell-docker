@@ -11,10 +11,12 @@ RUN curl https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz | tar -C /ho
       && rm -rf /home/makepkg/{*,.cache,.config} \
       && sudo rm -f /var/cache/pacman/pkg/*
 
-# AUR Packages
-RUN yay --noconfirm --removemake -S \
-  gosu \
-  && sudo rm -f /var/cache/pacman/pkg/*
+# # AUR Packages
+# RUN yay --noconfirm --removemake -S \
+#   package1 \
+#   package2 \
+#   && sudo rm -rf /home/makepkg/{*,.*} \
+#   && sudo rm -f /var/cache/pacman/pkg/*
 
 USER root
 RUN rm /etc/sudoers.d/makepkg \

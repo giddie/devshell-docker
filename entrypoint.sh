@@ -16,4 +16,10 @@ groupadd -g $host_group user
 useradd -mg $host_group -u $host_uid user 2> /dev/null
 chown $host_uid:$host_group /home/user
 
-exec gosu $host_uid /usr/local/bin/entrypoint-user.sh "$@"
+exec setpriv \
+  --reuid $host_uid \
+  --regid $host_group \
+  --init-groups \
+  --reset-env \
+  /usr/local/bin/entrypoint-user.sh \
+  "$@"
