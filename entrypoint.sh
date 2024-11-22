@@ -16,6 +16,9 @@ groupadd -g $host_group user
 useradd -mg $host_group -u $host_uid user 2> /dev/null
 chown $host_uid:$host_group /home/user
 
+echo "user ALL=(ALL:ALL) ALL" > /etc/sudoers.d/user
+echo "user:secret" | chpasswd
+
 exec setpriv \
   --reuid $host_uid \
   --regid $host_group \
