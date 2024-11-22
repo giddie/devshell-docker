@@ -8,6 +8,7 @@ USER makepkg
 RUN curl https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz | tar -C /home/makepkg -xz \
       && cd /home/makepkg/yay \
       && makepkg -sri --noconfirm \
+      && rm -rf /home/makepkg/{*,.cache,.config} \
       && sudo rm -f /var/cache/pacman/pkg/*
 
 # AUR Packages
