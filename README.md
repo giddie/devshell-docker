@@ -27,6 +27,9 @@ unpleasant version conflicts and similar complications.
 
 # Usage
 
+You can run it exactly as it is, but this is how I set it up within a given
+project:
+
 * Create a `.local` directory in the project root, and copy this template into
   `.local/devshell`.
 * Set the `project_name` in the `devshell` script. This determines the name of
@@ -54,11 +57,11 @@ PATH_add .local/bin
 
 Then run commands like this:
 
-```
-# ds echo hello world
+```bash
+$ ds echo hello world
 hello world
 
-# ds bash -c "pwd && id"
+$ ds bash -c "pwd && id"
 /my/project/path
 uid=1000(user) gid=100(user) groups=100(user)
 ```
@@ -85,7 +88,7 @@ Any system packages you need should be added to the Dockerfile.
 
 Taking `rust-analyzer` as an example, add `.local/bin/rust-analyzer`:
 
-```
+```bash
 #!/usr/bin/env bash
 set -euo pipefail
 DEVSHELL_DOCKER_OPTS="-i" exec devshell rust-analyzer "$@"
@@ -95,6 +98,87 @@ So long as you launch your editor from the terminal, where the `.envrc`
 has added the `.local/bin` directory to the front of `PATH`, it should run
 this wrapper instead of the default `rust-analyzer`. You'll need to ensure
 `rust-analyzer` is installed in the container.
+
+## Running several things in the same container
+
+The script will spawn a fresh container on each invocation by default. If you
+want to run several things in the same container, this is relatively
+straightforward with a wrapper script:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+container_name="my-project-main"
+container_id=$(docker container ls -q --filter=name=$container_name)
+if [[ $container_id ]]; then
+  docker exec -it $container_id /usr/local/bin/entrypoint.sh /bin/zsh
+else
+  DEVSHELL_DOCKER_OPTS="-it --name $container_name" devshell
+fi
+```
+
+## Elixir / Erlang Observer
+
+Running the [observer](https://www.erlang.org/doc/apps/observer/observer_ug)
+tool in a container can be tricky, due to an X server not being available.
+Fortunately, thanks to BEAM clustering we can simply run the Observer on the
+host, and then connect to the node inside the container:
+
+First, we create a script that runs our node inside the container with some
+proxying magic in place:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+DEVSHELL_DOCKER_OPTS=$(echo \
+  -it \
+  -p 127.0.0.1:9000:9000 \
+  -p 127.0.0.1:9001:9001 \
+  ) \
+  devshell bash -c "\
+    socat TCP-LISTEN:9000,fork TCP:localhost:4369 & \
+    iex --sname main@localhost \
+        --cookie mysecretcookie \
+        --erl '-kernel inet_dist_listen_min 9001 inet_dist_listen_max 9001' \
+        -S mix
+  "
+```
+
+This ensures that the VM inside the container is running
+[epmd](https://www.erlang.org/docs/19/man/epmd.html) and the node distribution
+port on ports of our choosing (which also don't conflict with any other local
+nodes that happen to be running). And then, when we want to observe the node:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+export ERL_EPMD_PORT=9000
+epmd -names > /dev/null || (2>&1 echo The remote node is not running. && exit 1)
+/usr/bin/iex \
+  --sname host@localhost \
+  --hidden \
+  --cookie mysecretcookie \
+  -e "Node.connect(:'main@localhost'); :observer.start"
+```
+
+And then click through: `Nodes` -> `main@localhost`.
+
+The way this works is that the node on the host will connect to the `epmd`
+instance that is already running inside the container, and will register its
+name there. This means that it believes it is a second node running inside the
+same container, and doesn't need to resolve a hostname to connect to the node
+remotely (which would otherwise be awkward to configure on the host). After
+looking up the target node's distribution port in `epmd` (via port 9000), the
+host node is then able to connect to the container node via port 9001.
+
+The `socat` trick is used because `epmd` permits only connections from localhost
+to register new node names. So we need to proxy the connection so that it looks
+like the connection is coming from inside the container.
+
+Note that clustering _between_ containers is much simpler: so long as they are
+connected to the same docker network, they can resolve each-other's hostnames
+and no special tricks are needed. This trick is needed only because docker hosts
+do not resolve container hostnames.
 
 # Known Issues
 
