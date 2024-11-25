@@ -11,18 +11,33 @@ fi
 cd $project_dir
 
 host_uid=$(stat -c %u .)
-host_group=$(stat -c %g .)
-groupadd -g $host_group user
-useradd -mg $host_group -u $host_uid user 2> /dev/null
-chown $host_uid:$host_group /home/user
+host_gid=$(stat -c %g .)
 
-echo "user ALL=(ALL:ALL) ALL" > /etc/sudoers.d/user
-echo "user:secret" | chpasswd
+group_name=$((getent group $host_gid || echo) | cut -d: -f1)
+if [[ ! $group_name ]]; then
+  group_name=user
+  groupadd -g $host_gid user
+fi
+
+user_name=$((getent passwd $host_uid || echo) | cut -d: -f1)
+if [[ ! $user_name ]]; then
+  user_name=user
+  useradd -mg $host_gid -u $host_uid $user_name 2> /dev/null
+fi
+
+# If the home directory is mounted as a volume, it will initially be root-owned.
+chown $host_uid:$host_gid /home/$user_name
+
+if [[ ! -f /etc/sudoers.d/user ]]; then
+  echo "$user_name ALL=(ALL:ALL) ALL" > /etc/sudoers.d/user
+  echo "Defaults lecture = never" > /etc/sudoers.d/lecture
+  echo "$user_name:secret" | chpasswd
+fi
 
 exec setpriv \
   --reuid $host_uid \
-  --regid $host_group \
-  --init-groups \
+  --regid $host_gid \
+  --clear-groups \
   --reset-env \
   /usr/local/bin/entrypoint-user.sh \
   "$@"
