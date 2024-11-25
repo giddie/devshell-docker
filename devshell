@@ -40,6 +40,7 @@ exec docker run --rm $docker_opts \
   --volume $base_dir:$base_dir \
   --volume ~/.zprezto:/usr/local/lib/prezto:ro \
   --volume ${project_name}-dev-home:/home/user \
+  --env TERM=$TERM \
   --env HOST_PROJECT_DIR=$base_dir \
   ${project_name}-dev \
   "$@"
