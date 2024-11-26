@@ -34,10 +34,10 @@ if [[ ! -f /etc/sudoers.d/user ]]; then
   echo "$user_name:secret" | chpasswd
 fi
 
+HOME=/home/$user_name
 exec setpriv \
   --reuid $host_uid \
   --regid $host_gid \
   --clear-groups \
-  --reset-env \
   /usr/local/bin/entrypoint-user.sh \
   "$@"
