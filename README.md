@@ -122,63 +122,47 @@ fi
 Running the [observer](https://www.erlang.org/doc/apps/observer/observer_ug)
 tool in a container can be tricky, due to an X server not being available.
 Fortunately, thanks to BEAM clustering we can simply run the Observer on the
-host, and then connect to the node inside the container:
+host, and then connect to the node inside the container.
 
-First, we create a script that runs our node inside the container with some
-proxying magic in place:
+First, we create a script that runs our node inside the container. The only
+tricky bit here is that we need to know the IP of the container before we start
+our node. We give the container a name so we can look up its IP later:
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-DEVSHELL_DOCKER_OPTS=$(echo \
-  -it \
-  -p 127.0.0.1:9000:9000 \
-  -p 127.0.0.1:9001:9001 \
-  ) \
+DEVSHELL_DOCKER_OPTS="-it --name my-main-node" \
   devshell bash -c "\
-    socat TCP-LISTEN:9000,fork TCP:localhost:4369 & \
-    iex --sname main@localhost \
-        --cookie mysecretcookie \
-        --erl '-kernel inet_dist_listen_min 9001 inet_dist_listen_max 9001' \
-        -S mix
+    ip=\$(ip -4 addr show eth0 | grep inet | head -n1 | xargs echo | cut -d' ' -f2 | cut -d/ -f1);
+    iex --name main@\$ip --cookie my-secret-cookie -S mix
   "
 ```
 
-This ensures that the VM inside the container is running
-[epmd](https://www.erlang.org/docs/19/man/epmd.html) and the node distribution
-port on ports of our choosing (which also don't conflict with any other local
-nodes that happen to be running). And then, when we want to observe the node:
+And then, we can create a script that spawns a node on the host, connects to our
+main node, and launches the observer:
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-export ERL_EPMD_PORT=9000
-epmd -names > /dev/null || (2>&1 echo The remote node is not running. && exit 1)
-/usr/bin/iex \
-  --sname host@localhost \
+
+node_ip=$(
+  docker container inspect my-main-node -f '{{json .NetworkSettings}}' \
+    | jq -r '.Networks[].IPAddress' \
+    | head -n1
+)
+
+iex \
+  --name host@localhost \
   --hidden \
-  --cookie mysecretcookie \
-  -e "Node.connect(:'main@localhost'); :observer.start"
+  --cookie my-secret-cookie \
+  -e "Node.connect(:'main@${node_ip}'); :observer.start"
 ```
 
-And then click through: `Nodes` -> `main@localhost`.
+And then click through: `Nodes` -> `main@...`.
 
-The way this works is that the node on the host will connect to the `epmd`
-instance that is already running inside the container, and will register its
-name there. This means that it believes it is a second node running inside the
-same container, and doesn't need to resolve a hostname to connect to the node
-remotely (which would otherwise be awkward to configure on the host). After
-looking up the target node's distribution port in `epmd` (via port 9000), the
-host node is then able to connect to the container node via port 9001.
-
-The `socat` trick is used because `epmd` permits only connections from localhost
-to register new node names. So we need to proxy the connection so that it looks
-like the connection is coming from inside the container.
-
-Note that clustering _between_ containers is much simpler: so long as they are
-connected to the same docker network, they can resolve each-other's hostnames
-and no special tricks are needed. This trick is needed only because docker hosts
-do not resolve container hostnames.
+Note that clustering _between_ containers is a little simpler: so long as they are
+connected to the same docker network, you can rely on DNS to resolve container
+names instead of figuring out IPs.
 
 # Known Issues
 
