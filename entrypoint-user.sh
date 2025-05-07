@@ -11,9 +11,10 @@ if [[ ! -d ~/.zprezto ]]; then
   touch ~/.zprezto-extra/misc/init.zsh
 fi
 
-if [[ ! -d ~/.asdf ]]; then
-  git clone https://github.com/asdf-vm/asdf ~/.asdf
-fi
-source ~/.asdf/asdf.sh
+# if [[ ! -d ~/.asdf ]]; then
+#   asdf plugin add ...
+#   asdf install
+# fi
+export PATH=~/.asdf/shims:$PATH
 
 exec "$@"
