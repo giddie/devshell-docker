@@ -99,6 +99,37 @@ has added the `.local/bin` directory to the front of `PATH`, it should run
 this wrapper instead of the default `rust-analyzer`. You'll need to ensure
 `rust-analyzer` is installed in the container.
 
+## Nix-Shell
+
+Maybe your project already has a `shell.nix`, and you want to continue handling
+your environment there. It's simple enough to get Nix up and running inside the
+container:
+
+1. Add a volume to house the Nix store in the `devshell` script, so that it
+   gets reused between container instances:
+    ```bash
+    --volume ${project_name}-nix-store:/nix \
+    ```
+2. This will be root-owned when docker mounts it, but it's simpler to install
+   Nix in single-user mode, so we can fix this in `entrypoint.sh`:
+   ```bash
+   chown -R $host_uid:$host_gid /nix
+   ```
+3. Finally, in `entrypoint-user.sh` we install Nix using the official
+   single-user install script, and ensure the `bin` directory is in the `PATH`:
+   ```bash
+   if [[ ! -d ~/.nix-profile ]]; then
+     curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
+   fi
+   PATH=~/.nix-profile/bin:$PATH
+   ```
+4. Test with: `./devshell nix-shell -p bash`
+5. Finally, you can replace the final line of `entrypoint-user.sh` with the
+   following, causing the nix shell to wrap everything you run:
+    ```bash
+    exec nix-shell --command "$*"
+    ```
+
 ## Running several things in the same container
 
 The script will spawn a fresh container on each invocation by default. If you
