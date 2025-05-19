@@ -130,6 +130,19 @@ container:
     exec nix-shell --command "$*"
     ```
 
+## Docker-in-Docker
+
+If you need to spawn docker containers from inside your dev container, the
+simplest approach is to provide access to the host docker socket.
+
+1. Add the socket as a bind-mount in the `devshell` script:
+    ```bash
+    --volume /var/run/docker.sock:/var/run/docker.sock \
+    ```
+2. Add `docker` to the list of packages to install in `Dockerfile`.
+3. In `entrypoint.sh`, in the final `exec` line, replace `--clear-groups` with:
+   `--groups 000`, substituting whatever GID owns the socket file on your host).
+
 ## Running several things in the same container
 
 The script will spawn a fresh container on each invocation by default. If you
