@@ -15,6 +15,6 @@ fi
 #   asdf plugin add ...
 #   asdf install
 # fi
-export PATH=~/.asdf/shims:$PATH
+# export PATH=~/.asdf/shims:$PATH
 
 exec "$@"
