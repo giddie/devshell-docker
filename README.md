@@ -168,17 +168,32 @@ tool in a container can be tricky, due to an X server not being available.
 Fortunately, thanks to BEAM clustering we can simply run the Observer on the
 host, and then connect to the node inside the container.
 
-First, we create a script that runs our node inside the container. The only
-tricky bit here is that we need to know the IP of the container before we start
-our node. We give the container a name so we can look up its IP later:
+First, we create a script that runs our node inside the container.
+
+* We give the container a name so we can look up its IP later.
+* We need to know the IP of the container before we start our node. That's what
+  the `ip=` line is doing.
+* We need to tell docker to publish two ports (EPMD and the distribution port),
+  but this is just so docker will open up the ports. We'll be connecting
+  directly to the container IP, not the docker host. We don't care about
+  which host port is mapped, so we don't specify one. (Docker will choose one.)
+* The EPMD port is always 4369 by default, but we need to use the
+  `inet_dist_...` options to ask the VM to use a specific distribution port, so
+  we know which one to publish (4370).
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-DEVSHELL_DOCKER_OPTS="-it --name my-main-node" \
+
+DEVSHELL_DOCKER_OPTS="-it --name my-main-node -p 4369 -p 4370" \
   devshell bash -c "\
     ip=\$(ip -4 addr show eth0 | grep inet | head -n1 | xargs echo | cut -d' ' -f2 | cut -d/ -f1);
-    iex --name main@\$ip --cookie my-secret-cookie -S mix
+    iex \
+      --name main@\$ip \
+      --cookie my-secret-cookie \
+      --erl \"-kernel inet_dist_listen_min 4370\"\
+      --erl \"-kernel inet_dist_listen_max 4370\"\
+      -S mix
   "
 ```
 
