@@ -3,12 +3,18 @@
 set -euo pipefail
 
 project_name="general"
+default_variant="archlinux"
+default_home_volume="none"
+# default_home_volume="${project_name}-devshell-home"
 
 script_dir=$(dirname $(readlink -f $0))
 base_dir=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+variant=${DEVSHELL_VARIANT:-$default_variant}
+dockerfile=Dockerfile.${variant}
+home_volume=${DEVSHELL_HOME_VOLUME:-${default_home_volume}}
 
 image_source_files=(
-  Dockerfile
+  $dockerfile
   entrypoint.sh
   entrypoint-user.sh
 )
@@ -19,7 +25,7 @@ image_source_mtime=$(
   | sort -nr | head -n1
 )
 
-image_name="$project_name-devshell:latest"
+image_name="${project_name}-devshell:${variant}"
 need_to_build=true
 
 if [[ -n $(docker images -q $image_name) ]]; then
@@ -31,20 +37,27 @@ fi
 
 if $need_to_build; then
   echo "Building docker image..."
-  docker build -t $image_name $script_dir
+  no_cache=$([[ ${CACHE:-true} == false ]] && echo "--no-cache" || echo)
+  docker build $no_cache -f $dockerfile -t $image_name $script_dir
 fi
 
 docker_opts=${DEVSHELL_DOCKER_OPTS:-"-it"}
 
+# Local ZSH config
 if [[ -d ${HOME}/.zprezto ]]; then
   docker_opts="${docker_opts} \
     --volume ${HOME}/.zprezto:/usr/local/lib/prezto:ro"
 fi
 
-exec docker run --rm $docker_opts \
-  --volume $base_dir:$base_dir \
-  --volume ${project_name}-devshell-home:/home/user \
-  --env TERM=$TERM \
-  --env HOST_PROJECT_DIR=$base_dir \
-  ${project_name}-devshell \
+if [[ $home_volume != "none" ]]; then
+  docker_opts="${docker_opts} \
+    --volume $home_volume:/home/user"
+fi
+
+exec docker run --rm ${docker_opts} \
+  --volume ${base_dir}:${base_dir} \
+  --env TERM=${TERM} \
+  --env DEVSHELL_VARIANT=${variant} \
+  --env DEVSHELL_PROJECT_DIR=${base_dir} \
+  ${project_name}-devshell:${variant} \
   "$@"

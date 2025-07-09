@@ -23,23 +23,59 @@ It's also intended to be simple and easy to customise.
   (This solves a lot of headaches with LSPs!)
 * Sets up **ASDF** so you can run the right versions of all your
   tools.
-* Uses a docker volume for the container user's home directory, so that **cached
-  artefacts** can be reused later.
+* Optional docker volume for the container user's home directory, so that
+  **cached artefacts** can be reused later.
 * The image is **automatically rebuilt** when running the devshell after
   modifying one of the source files.
+* Choose your **base image**: Alpine, ArchLinux, Ubuntu, or easily add your own.
 
 # Usage
 
 You can run the `devshell` script from any directory, and you'll be dropped into
 an isolated environment in the same directory, ready to go. Only the directory
-you launched the devshell script from will be visible. But for non-trivial
-projects you'll want to clone this and customise it. This is how I set it up
-within a given project:
+you launched the devshell script from will be visible. Inside the devshell,
+install whatever you need and go crazy -- it all goes away when you exit the
+shell. This may be all you need for a short-term experiment.
 
-* Create a `.local` directory in the project root, and copy this template into
+## Variants
+
+The default base image is ArchLinux, but you can choose a different one like
+this:
+
+```bash
+$ DEVSHELL_VARIANT=alpine devshell
+$ DEVSHELL_VARIANT=ubuntu devshell
+```
+
+You'll find a corresponding Dockerfile for each variant. Creating your own
+should be pretty straightforward. There is also a `DEVSHELL_VARIANT` environment
+variable available inside the container for any scripts that may want to switch
+behaviour based on this.
+
+## Home Volume
+
+You can persist the contents of the home directory `/home/user` in a docker
+volume. This is configured by the `DEVSHELL_HOME_VOLUME` environment variable,
+like this:
+
+```bash
+$ DEVSHELL_HOME_VOLUME=my-project-home devshell
+```
+
+The default value is `none`. If you like, you can edit the `devshell` script to
+set a different default, in which case setting `DEVSHELL_HOME_VOLUME=none` will
+give you the original behaviour (no docker volume).
+
+## Setup for Customisation
+
+This is how I set up the devshell for any project that needs a customised
+devshell:
+
+* Create a `.local` directory in the project root, and clone this repository into
   `.local/devshell`.
-* Set the `project_name` in the `devshell` script. This determines the name of
-  the docker image and volume.
+* Set the `project_name` at the top of the `devshell` script. This determines
+  the name of the docker image.
+* Also set `default_variant` and `default_home_volume` as needed.
 * Create a `.local/bin` directory and add it to `PATH` with a `.envrc`
   file (see [direnv](https://direnv.net/)).
 * Add a symlink to the `.local/devshell/devshell` script there.
@@ -74,15 +110,19 @@ uid=1000(user) gid=100(user) groups=100(user)
 
 ## Customisation
 
-The Dockerfile on the default branch is Archlinux-based. Check out the `ubuntu`
-branch for an Ubuntu-based devshell. Generally, apart from the Dockerfile not
-much needs to change when you use a different base image. Some care may need to
-be taken in `entrypoint.sh` that the user and group are set up correctly.
+Generally, you will want to edit the relevant Dockerfile for your default
+variant, as well as `entrypoint-user.sh` to set up any tools you need inside the
+container.
 
-You probably want to check the volumes that are mounted at the bottom of
-`devshell`. I have a ZSH config that I like it to mount (and activate in
-`entrypoint-user.sh`), but it'll skip that automatically if it's not found. You
-may want to tweak that to do something similar for your preferred setup.
+When creating a new variant Dockerfile, some care may need to be taken in
+`entrypoint.sh` that the user and group are set up correctly. You can use the
+`DEVSHELL_VARIANT` environment variable if necessary to adjust the behaviour
+between different variants.
+
+You probably want to check the volumes that are mounted at the bottom
+of `devshell`. I have a local ZSH config that I mount (and activate in
+`entrypoint-user.sh`). You may want to tweak that to do something similar for
+your preferred setup.
 
 Also be sure to check `entrypoint-user.sh`, which can be used to set up
 project-specific tooling for the non-root user.
@@ -249,14 +289,14 @@ names instead of figuring out IPs.
 
 ## It tries to rebuild the image each time I launch the devshell!
 
-This happens when docker has figured out that your source files match an image
-that it already built previously, such as when you saved a change and
+This happens when docker has figured out that your source files match an
+image that it already built previously, such as when you saved a change and
 subsequently reverted it. Because the image timestamp is older than the source
 files, the devshell script can't tell that it doesn't in fact need to be
 rebuilt.
 
-You can fix it by forcing a rebuild without the docker cache:
+You can fix it by forcing the image to be fully rebuilt like this:
 
 ```
-# docker build --no-cache .
+# CACHE=false devshell
 ```

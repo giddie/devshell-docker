@@ -2,9 +2,9 @@
 
 set -euo pipefail
 
-project_dir=${HOST_PROJECT_DIR:=""}
+project_dir=${DEVSHELL_PROJECT_DIR:=""}
 if [[ $project_dir == "" ]]; then
-  echo HOST_PROJECT_DIR must be set. >&2
+  echo DEVSHELL_PROJECT_DIR must be set. >&2
   exit 1
 fi
 
