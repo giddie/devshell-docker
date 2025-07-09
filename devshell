@@ -37,12 +37,12 @@ fi
 docker_opts=${DEVSHELL_DOCKER_OPTS:-"-it"}
 
 if [[ -d ${HOME}/.zprezto ]]; then
-  volume_prezto="--volume ${HOME}/.zprezto:/usr/local/lib/prezto:ro"
+  docker_opts="${docker_opts} \
+    --volume ${HOME}/.zprezto:/usr/local/lib/prezto:ro"
 fi
 
 exec docker run --rm $docker_opts \
   --volume $base_dir:$base_dir \
-  ${volume_prezto:-} \
   --volume ${project_name}-devshell-home:/home/user \
   --env TERM=$TERM \
   --env HOST_PROJECT_DIR=$base_dir \
