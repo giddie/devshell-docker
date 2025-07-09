@@ -1,4 +1,4 @@
-This provides a transient, well-defined, and isolated environment for
+This provides a temporary, well-defined, and isolated environment for
 development. The goal is to provide a way to run your tools with full access to
 your project directory and nothing else, in as transparent a way as possible,
 and to expose a clean system environment to the wrapped tools to avoid
@@ -8,6 +8,8 @@ unpleasant version conflicts and similar complications.
 # devshell cargo build
 ...        <-- Everything compiles inside a temporary container
 ```
+
+It's also intended to be simple and easy to customise.
 
 # Features
 
@@ -19,7 +21,7 @@ unpleasant version conflicts and similar complications.
   root-owned files will appear in your project directory!)
 * Your project directory path is the **same inside and outside** the container.
   (This solves a lot of headaches with LSPs!)
-* Optionally sets up **ASDF** so you can run the right versions of all your
+* Sets up **ASDF** so you can run the right versions of all your
   tools.
 * Uses a docker volume for the container user's home directory, so that **cached
   artefacts** can be reused later.
