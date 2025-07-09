@@ -23,6 +23,7 @@ RUN rm /etc/sudoers.d/makepkg \
 
 # Pacman Packages
 RUN pacman -Syu --noconfirm \
+  git \
   zsh \
   && rm -f /var/cache/pacman/pkg/*
 
