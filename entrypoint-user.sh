@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-if [[ ! -d ~/.zprezto ]]; then
+if [[ ! -d ~/.zprezto && -d /usr/local/lib/prezto/runcoms ]]; then
   ln -s /usr/local/lib/prezto ~/.zprezto
   for dotfile in ~/.zprezto/runcoms/z*; do
     ln -sf $dotfile ~/.$(basename $dotfile)

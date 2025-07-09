@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-project_name="new-project"
+project_name="general"
 
 script_dir=$(dirname $(readlink -f $0))
 base_dir=$(git rev-parse --show-toplevel)
@@ -19,7 +19,7 @@ image_source_mtime=$(
   | sort -nr | head -n1
 )
 
-image_name="$project_name-dev:latest"
+image_name="$project_name-devshell:latest"
 need_to_build=true
 
 if [[ -n $(docker images -q $image_name) ]]; then
@@ -36,11 +36,15 @@ fi
 
 docker_opts=${DEVSHELL_DOCKER_OPTS:-"-it"}
 
+if [[ -d ${HOME}/.zprezto ]]; then
+  volume_prezto="--volume ${HOME}/.zprezto:/usr/local/lib/prezto:ro"
+fi
+
 exec docker run --rm $docker_opts \
   --volume $base_dir:$base_dir \
-  --volume ~/.zprezto:/usr/local/lib/prezto:ro \
-  --volume ${project_name}-dev-home:/home/user \
+  ${volume_prezto:-} \
+  --volume ${project_name}-devshell-home:/home/user \
   --env TERM=$TERM \
   --env HOST_PROJECT_DIR=$base_dir \
-  ${project_name}-dev \
+  ${project_name}-devshell \
   "$@"

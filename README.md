@@ -19,16 +19,20 @@ unpleasant version conflicts and similar complications.
   root-owned files will appear in your project directory!)
 * Your project directory path is the **same inside and outside** the container.
   (This solves a lot of headaches with LSPs!)
-* Sets up **ASDF** so you can run the right versions of all your tools.
+* Optionally sets up **ASDF** so you can run the right versions of all your
+  tools.
 * Uses a docker volume for the container user's home directory, so that **cached
   artefacts** can be reused later.
-* The image is **automatically rebuilt** when running the devshell after modifying
-  one of the source files.
+* The image is **automatically rebuilt** when running the devshell after
+  modifying one of the source files.
 
 # Usage
 
-You can run it exactly as it is, but this is how I set it up within a given
-project:
+You can run the `devshell` script from any directory, and you'll be dropped into
+an isolated environment in the same directory, ready to go. Only the directory
+you launched the devshell script from will be visible. But for non-trivial
+projects you'll want to clone this and customise it. This is how I set it up
+within a given project:
 
 * Create a `.local` directory in the project root, and copy this template into
   `.local/devshell`.
@@ -73,9 +77,10 @@ branch for an Ubuntu-based devshell. Generally, apart from the Dockerfile not
 much needs to change when you use a different base image. Some care may need to
 be taken in `entrypoint.sh` that the user and group are set up correctly.
 
-Be sure to check the volumes that are mounted at the bottom of `devshell`. I
-mount my local ZSH config. You may want to make some other host config available
-in a similar way.
+You probably want to check the volumes that are mounted at the bottom of
+`devshell`. I have a ZSH config that I like it to mount (and activate in
+`entrypoint-user.sh`), but it'll skip that automatically if it's not found. You
+may want to tweak that to do something similar for your preferred setup.
 
 Also be sure to check `entrypoint-user.sh`, which can be used to set up
 project-specific tooling for the non-root user.
@@ -83,6 +88,21 @@ project-specific tooling for the non-root user.
 Any system packages you need should be added to the Dockerfile.
 
 # Examples
+
+## Disable Sudo
+
+If you _really_ don't want **sudo** or any kind of privilege escalation, simply
+add this option to the `docker-run` command in `devshell`:
+
+```bash
+--security-opt no-new-privileges \
+```
+
+Or invoke the script like this:
+
+```bash
+$ DEVSHELL_DOCKER_OPTS="-it --security-opt no-new-privileges" devshell
+```
 
 ## Running an LSP
 
