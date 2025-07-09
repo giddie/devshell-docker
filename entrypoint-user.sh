@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-if [[ ! -d ~/.zprezto ]]; then
+if [[ ! -a ~/.zshrc && ! -d ~/.zprezto ]]; then
   if [[ -d /usr/local/lib/prezto/runcoms ]]; then
     ln -s /usr/local/lib/prezto ~/.zprezto
   else
@@ -10,16 +10,18 @@ if [[ ! -d ~/.zprezto ]]; then
     read -r yn
     case "$yn" in
       "" | [Yy]*) git clone --recursive https://github.com/giddie/prezto.git ~/.zprezto; break ;;
-      *) ;;
+      *) touch ~/.zshrc ;;
     esac
   fi
 
-  for dotfile in ~/.zprezto/runcoms/z*; do
-    ln -sf $dotfile ~/.$(basename $dotfile)
-  done
+  if [[ -d ~/.zprezto ]]; then
+    for dotfile in ~/.zprezto/runcoms/z*; do
+      ln -sf $dotfile ~/.$(basename $dotfile)
+    done
 
-  mkdir -p ~/.zprezto-extra/misc
-  touch ~/.zprezto-extra/misc/init.zsh
+    mkdir -p ~/.zprezto-extra/misc
+    touch ~/.zprezto-extra/misc/init.zsh
+  fi
 fi
 
 # if [[ ! -d ~/.asdf ]]; then
