@@ -38,7 +38,7 @@ fi
 if $need_to_build; then
   echo "Building docker image..."
   no_cache=$([[ ${CACHE:-true} == false ]] && echo "--no-cache" || echo)
-  docker build $no_cache -f $dockerfile -t $image_name $script_dir
+  docker build $no_cache -f $script_dir/$dockerfile -t $image_name $script_dir
 fi
 
 docker_opts=${DEVSHELL_DOCKER_OPTS:-"-it"}
