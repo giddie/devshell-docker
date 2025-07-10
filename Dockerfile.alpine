@@ -1,8 +1,17 @@
 FROM alpine AS dev
 
+# ASDF
+RUN apk add --no-cache --virtual .asdf go \
+  && GOBIN=/usr/local/bin go install github.com/asdf-vm/asdf/cmd/asdf@latest \
+  && apk del .asdf \
+  && rm -rf /root/.cache \
+  && rm -rf /root/.config \
+  && rm -rf /root/go
+
 RUN apk add --no-cache \
-  coreutils \
   bash \
+  coreutils \
+  curl \
   git \
   shadow \
   sudo \

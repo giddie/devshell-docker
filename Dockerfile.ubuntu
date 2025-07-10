@@ -1,10 +1,24 @@
 FROM ubuntu AS dev
 
 RUN apt-get update -qq
-RUN apt-get install -qq -y build-essential
-RUN apt-get install -qq -y sudo
-RUN apt-get install -qq -y git
-RUN apt-get install -qq -y zsh
+
+RUN apt-get install -qq -y \
+  build-essential \
+  curl
+
+# ASDF
+RUN apt-get install -qq -y golang \
+  && GOBIN=/usr/local/bin go install github.com/asdf-vm/asdf/cmd/asdf@latest \
+  && apt-get purge -y golang \
+  && apt-get autoremove --purge -y \
+  && rm -rf /root/.cache \
+  && rm -rf /root/.config \
+  && rm -rf /root/go
+
+RUN apt-get install -qq -y \
+  git \
+  sudo \
+  zsh
 
 COPY entrypoint.sh /usr/local/bin
 COPY entrypoint-user.sh /usr/local/bin
