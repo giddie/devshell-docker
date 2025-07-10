@@ -7,10 +7,16 @@ if [[ ! -a ~/.zshrc && ! -d ~/.zprezto ]]; then
     ln -s /usr/local/lib/prezto ~/.zprezto
   else
     echo -n "Would you like a nice shell prompt? [Y/n]: "
-    read -r yn
-    case "$yn" in
-      "" | [Yy]*) git clone --recursive https://github.com/giddie/prezto.git ~/.zprezto; break ;;
-      *) touch ~/.zshrc ;;
+    read -r input
+    case "$input" in
+      "" | [Yy]*)
+        echo -n "This could take a few seconds..."
+        git clone --quiet --recursive \
+          https://github.com/giddie/prezto.git ~/.zprezto
+        ;;
+      *)
+        touch ~/.zshrc
+        ;;
     esac
   fi
 
