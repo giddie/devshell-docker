@@ -54,6 +54,17 @@ if [[ $home_volume != "none" ]]; then
     --volume $home_volume:/home/user"
 fi
 
+if [[ ${DEVSHELL_SSH:-} == "yes" ]]; then
+  ssh_auth_sock=$(readlink -f ${SSH_AUTH_SOCK})
+  docker_opts="${docker_opts} \
+    --volume ${ssh_auth_sock}:${ssh_auth_sock} \
+    --env SSH_AUTH_SOCK=${ssh_auth_sock}"
+fi
+
+if [[ ${DEVSHELL_SUDO:-"yes"} == "no" ]]; then
+  docker_opts="${docker_opts} --security-opt no-new-privileges"
+fi
+
 exec docker run --rm ${docker_opts} \
   --volume ${base_dir}:${base_dir} \
   --env TERM=${TERM} \

@@ -66,6 +66,23 @@ The default value is `none`. If you like, you can edit the `devshell` script to
 set a different default, in which case setting `DEVSHELL_HOME_VOLUME=none` will
 give you the original behaviour (no docker volume).
 
+## SSH
+
+If you want access to your ssh-agent inside the container:
+
+```bash
+$ DEVSHELL_SSH=yes devshell
+```
+
+## Sudo
+
+By default you'll be able to invoke `sudo`, which will require the password
+`secret`. If you want to disable all privilege escalation, you can do:
+
+```bash
+$ DEVSHELL_SUDO=no devshell
+```
+
 ## Setup for Customisation
 
 This is how I set up the devshell for any project that needs a customised
@@ -130,21 +147,6 @@ project-specific tooling for the non-root user.
 Any system packages you need should be added to the Dockerfile.
 
 # Examples
-
-## Disable Sudo
-
-If you _really_ don't want **sudo** or any kind of privilege escalation, simply
-add this option to the `docker-run` command in `devshell`:
-
-```bash
---security-opt no-new-privileges \
-```
-
-Or invoke the script like this:
-
-```bash
-$ DEVSHELL_DOCKER_OPTS="-it --security-opt no-new-privileges" devshell
-```
 
 ## Running an LSP
 
