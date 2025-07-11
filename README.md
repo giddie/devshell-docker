@@ -5,7 +5,7 @@ and to expose a clean system environment to the wrapped tools to avoid
 unpleasant version conflicts and similar complications.
 
 ```
-# devshell cargo build
+$ devshell cargo build
 ...        <-- Everything compiles inside a temporary container
 ```
 
@@ -37,6 +37,24 @@ you launched the devshell script from will be visible. Inside the devshell,
 install whatever you need and go crazy -- it all goes away when you exit the
 shell. This may be all you need for a short-term experiment.
 
+You can run stuff non-interactively just fine:
+
+```bash
+$ devshell make my-project
+$ devshell bash -c "ONE=two\ three env"
+```
+
+## Docker Options
+
+By default `docker run` (or `docker exec`) are provided with the `-it` flags
+(interaction, TTY). Some non-interactive tools may complain about this. You can
+override it like this:
+
+```bash
+$ DEVSHELL_DOCKER_OPTS= devshell scripts/my-script
+$ DEVSHELL_DOCKER_OPTS="-i" devshell .local/bin/my-lsp
+```
+
 ## Variants
 
 The default base image is ArchLinux, but you can choose a different one like
@@ -64,7 +82,19 @@ $ DEVSHELL_HOME_VOLUME=my-project-home devshell
 
 The default value is `none`. If you like, you can edit the `devshell` script to
 set a different default, in which case setting `DEVSHELL_HOME_VOLUME=none` will
-give you the original behaviour (no docker volume).
+give you the original behaviour (i.e. no docker volume).
+
+## Shared Container
+
+By default, running `devshell` will create a separate container for each
+invocation. This makes it easy to list and kill them separately from the host
+(`docker ps` and `docker kill`). But you can also choose to use a single
+container, running additional processes inside the existing container if it
+exists. Just choose a name for the container:
+
+```bash
+$ DEVSHELL_CONTAINER_NAME="my-container" devshell
+```
 
 ## SSH
 
@@ -207,24 +237,6 @@ simplest approach is to provide access to the host docker socket.
 3. In `entrypoint.sh`, in the final `exec` line, replace `--clear-groups` with:
    `--groups 000`, substituting whatever GID owns the socket file on your host).
 
-## Running several things in the same container
-
-The script will spawn a fresh container on each invocation by default. If you
-want to run several things in the same container, this is relatively
-straightforward with a wrapper script:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-container_name="my-project-main"
-container_id=$(docker container ls -q --filter=name=$container_name)
-if [[ $container_id ]]; then
-  docker exec -it $container_id /usr/local/bin/entrypoint.sh /bin/zsh
-else
-  DEVSHELL_DOCKER_OPTS="-it --name $container_name" devshell
-fi
-```
-
 ## Elixir / Erlang Observer
 
 Running the [observer](https://www.erlang.org/doc/apps/observer/observer_ug)
@@ -300,5 +312,5 @@ rebuilt.
 You can fix it by forcing the image to be fully rebuilt like this:
 
 ```
-# CACHE=false devshell
+# CACHE=no devshell
 ```
