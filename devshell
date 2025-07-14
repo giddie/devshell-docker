@@ -7,6 +7,7 @@ default_variant="archlinux"
 default_container_name="none"
 default_home_volume="none"
 default_args=("/usr/bin/zsh")
+default_ro_subdirs=(".git")
 
 script_dir=$(dirname $(readlink -f $0))
 base_dir=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
@@ -48,9 +49,9 @@ fi
 ### Options
 
 if [[ -v DEVSHELL_DOCKER_OPTS ]]; then
-  docker_opts=$DEVSHELL_DOCKER_OPTS
+  docker_opts=($DEVSHELL_DOCKER_OPTS)
 else
-  docker_opts="-it"
+  docker_opts=("-it")
 fi
 
 if [[ $# > 0 ]]; then
@@ -61,11 +62,13 @@ fi
 
 if [[ $container_name != "none" ]]; then
   container_id=$(docker container ls -q --filter=name=$container_name)
-  found_image_name=$(docker inspect $container_id --format="{{.Config.Image}}")
-  if [[ $found_image_name != $image_name ]]; then
-    echo >&2 "Running container \"${container_name}\" has a different image:" \
-      "${found_image_name} vs ${image_name}."
-    exit 1
+  if [[ -n $container_id ]]; then
+    found_image_name=$(docker inspect $container_id --format="{{.Config.Image}}")
+    if [[ $found_image_name != $image_name ]]; then
+      echo >&2 "Running container \"${container_name}\" has a different image:" \
+        "${found_image_name} vs ${image_name}."
+      exit 1
+    fi
   fi
 fi
 
@@ -73,35 +76,45 @@ if [[ ${container_id:-} ]]; then
   exec docker exec $docker_opts $container_id /usr/local/bin/entrypoint.sh "${args[@]}"
 else
   if [[ $container_name != "none" ]]; then
-    docker_opts="${docker_opts} --name $container_name"
+    docker_opts+=("--name" ${container_name})
   fi
 
   if [[ $home_volume != "none" ]]; then
-    docker_opts="${docker_opts} --volume $home_volume:/home/user"
+    docker_opts+=("--volume" "${home_volume}:/home/user")
   fi
 
   if [[ ${DEVSHELL_SSH:-} == "yes" ]]; then
     ssh_auth_sock=$(readlink -f ${SSH_AUTH_SOCK})
-    docker_opts="${docker_opts} \
-      --volume ${ssh_auth_sock}:${ssh_auth_sock} \
-      --env SSH_AUTH_SOCK=${ssh_auth_sock}"
+    docker_opts+=(
+      "--volume" "${ssh_auth_sock}:${ssh_auth_sock}"
+      "--env" "SSH_AUTH_SOCK=${ssh_auth_sock}"
+    )
   fi
 
   if [[ ${DEVSHELL_SUDO:-} == "no" ]]; then
-    docker_opts="${docker_opts} --security-opt no-new-privileges"
+    docker_opts+=("--security-opt" "no-new-privileges")
   fi
+
+  if [[ ! -v DEVSHELL_RO_SUBDIRS ]]; then
+    ro_subdirs=("${default_ro_subdirs[@]}")
+  else
+    IFS=':' read -r -a ro_subdirs <<< ${DEVSHELL_RO_SUBDIRS}
+  fi
+  for subdir_relative in "${ro_subdirs[@]}"; do
+    subdir="${base_dir}/${subdir_relative}"
+    docker_opts+=("--volume" "${subdir}:${subdir}:ro")
+  done
 
   # Local ZSH config
   if [[ -d ${HOME}/.zprezto ]]; then
-    docker_opts="${docker_opts} \
-      --volume ${HOME}/.zprezto:/usr/local/lib/prezto:ro"
+    docker_opts+=("--volume" "${HOME}/.zprezto:/usr/local/lib/prezto:ro")
   fi
 
-  exec docker run --rm ${docker_opts} \
+  exec docker run --rm "${docker_opts[@]}" \
     --volume ${base_dir}:${base_dir} \
     --env TERM=${TERM} \
     --env DEVSHELL_VARIANT=${variant} \
     --env DEVSHELL_PROJECT_DIR=${base_dir} \
-    ${project_name}-devshell:${variant} \
+    "${image_name}" \
     "${args[@]}"
 fi

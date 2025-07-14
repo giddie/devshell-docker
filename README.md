@@ -84,6 +84,18 @@ The default value is `none`. If you like, you can edit the `devshell` script to
 set a different default, in which case setting `DEVSHELL_HOME_VOLUME=none` will
 give you the original behaviour (i.e. no docker volume).
 
+## Read-Only Subdirectories
+
+By default, the `.git` subdirectory will be mounted read-only if found,
+preventing tools inside the devshell from doing anything unexpected to your git
+repo. You can disable this, or set any number of subdirectories to be read-only,
+like this:
+
+```bash
+$ DEVSHELL_RO_SUBDIRS= devshell
+$ DEVSHELL_RO_SUBDIRS=.git:a/b/My Secrets:docs devshell
+```
+
 ## Shared Container
 
 By default, running `devshell` will create a separate container for each
@@ -111,6 +123,13 @@ By default you'll be able to invoke `sudo`, which will require the password
 
 ```bash
 $ DEVSHELL_SUDO=no devshell
+```
+
+If you want to do _some_ actions as root and disable sudo later, you can do this
+inside the container when you're ready:
+
+```bash
+$ exec setpriv --no-new-privs zsh
 ```
 
 ## Setup for Customisation
