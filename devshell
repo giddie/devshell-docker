@@ -100,9 +100,11 @@ else
   else
     IFS=':' read -r -a ro_paths <<< ${DEVSHELL_RO_PATHS}
   fi
-  for subdir_relative in "${ro_paths[@]}"; do
-    subdir="${base_dir}/${subdir_relative}"
-    docker_opts+=("--volume" "${subdir}:${subdir}:ro")
+  for path_relative in "${ro_paths[@]}"; do
+    path="${base_dir}/${path_relative}"
+    if [[ -a $path ]]; then
+      docker_opts+=("--volume" "${path}:${path}:ro")
+    fi
   done
 
   # Local ZSH config
