@@ -1,6 +1,7 @@
 FROM archlinux:base-devel AS dev
 
-RUN pacman -Syu --noconfirm
+RUN pacman -Syu --noconfirm \
+  && rm -rf /var/cache/pacman/pkg/*
 
 RUN useradd --create-home makepkg \
   && echo "makepkg ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers.d/makepkg
