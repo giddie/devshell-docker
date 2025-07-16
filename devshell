@@ -7,7 +7,7 @@ default_variant="archlinux"
 default_container_name="none"
 default_home_volume="none"
 default_args=("/usr/bin/zsh")
-default_ro_subdirs=(".git")
+default_ro_paths=(".git" ".local")
 
 script_dir=$(dirname $(readlink -f $0))
 base_dir=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
@@ -95,12 +95,12 @@ else
     docker_opts+=("--security-opt" "no-new-privileges")
   fi
 
-  if [[ ! -v DEVSHELL_RO_SUBDIRS ]]; then
-    ro_subdirs=("${default_ro_subdirs[@]}")
+  if [[ ! -v DEVSHELL_RO_PATHS ]]; then
+    ro_paths=("${default_ro_paths[@]}")
   else
-    IFS=':' read -r -a ro_subdirs <<< ${DEVSHELL_RO_SUBDIRS}
+    IFS=':' read -r -a ro_paths <<< ${DEVSHELL_RO_PATHS}
   fi
-  for subdir_relative in "${ro_subdirs[@]}"; do
+  for subdir_relative in "${ro_paths[@]}"; do
     subdir="${base_dir}/${subdir_relative}"
     docker_opts+=("--volume" "${subdir}:${subdir}:ro")
   done

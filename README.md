@@ -86,14 +86,14 @@ give you the original behaviour (i.e. no docker volume).
 
 ## Read-Only Subdirectories
 
-By default, the `.git` subdirectory will be mounted read-only if found,
-preventing tools inside the devshell from doing anything unexpected to your git
-repo. You can disable this, or set any number of subdirectories to be read-only,
-like this:
+By default, the `.git` and `.local` subdirectories will be mounted read-only
+if found, preventing tools inside the devshell from doing anything unexpected
+to your git repo or local tools. You can disable this, or set any number of
+subdirectories to be read-only, like this:
 
 ```bash
-$ DEVSHELL_RO_SUBDIRS= devshell
-$ DEVSHELL_RO_SUBDIRS=.git:a/b/My Secrets:docs devshell
+$ DEVSHELL_RO_PATHS= devshell
+$ DEVSHELL_RO_PATHS=.git:a/b/My Secrets:docs devshell
 ```
 
 ## Shared Container
