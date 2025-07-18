@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+script_dir=$(dirname $(readlink -f $0))
+base_dir=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+
 project_name="general"
 default_variant="archlinux"
 default_container_name="none"
@@ -9,8 +12,6 @@ default_home_volume="none"
 default_args=("/usr/bin/zsh")
 default_ro_paths=(".git" ".local")
 
-script_dir=$(dirname $(readlink -f $0))
-base_dir=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 variant=${DEVSHELL_VARIANT:-$default_variant}
 dockerfile=Dockerfile.${variant}
 container_name=${DEVSHELL_CONTAINER_NAME:-${default_container_name}}
