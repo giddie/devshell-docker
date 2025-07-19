@@ -11,6 +11,7 @@ default_container_name="none"
 default_home_volume="none"
 default_args=("/usr/bin/zsh")
 default_ro_paths=(".git" ".local")
+default_masked_paths=()
 
 variant=${DEVSHELL_VARIANT:-$default_variant}
 dockerfile=Dockerfile.${variant}
@@ -105,6 +106,20 @@ else
     path="${base_dir}/${path_relative}"
     if [[ -a $path ]]; then
       docker_opts+=("--volume" "${path}:${path}:ro")
+    fi
+  done
+
+  if [[ ! -v DEVSHELL_MASKED_PATHS ]]; then
+    masked_paths=("${default_masked_paths[@]}")
+  else
+    IFS=':' read -r -a masked_paths <<< ${DEVSHELL_MASKED_PATHS}
+  fi
+  for path_relative in "${masked_paths[@]}"; do
+    path="${base_dir}/${path_relative}"
+    if [[ -f $path ]]; then
+      docker_opts+=("--volume" "/dev/null:${path}")
+    elif [[ -d $path ]]; then
+      docker_opts+=("--mount" "type=tmpfs,destination=${path}")
     fi
   done
 

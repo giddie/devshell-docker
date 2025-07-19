@@ -84,7 +84,7 @@ The default value is `none`. If you like, you can edit the `devshell` script to
 set a different default, in which case setting `DEVSHELL_HOME_VOLUME=none` will
 give you the original behaviour (i.e. no docker volume).
 
-## Read-Only Subdirectories
+## Read-Only Paths
 
 By default, the `.git` and `.local` subdirectories will be mounted read-only
 if found, preventing tools inside the devshell from doing anything unexpected
@@ -95,6 +95,18 @@ subdirectories to be read-only, like this:
 $ DEVSHELL_RO_PATHS= devshell
 $ DEVSHELL_RO_PATHS=.git:a/b/My Secrets:docs devshell
 ```
+
+## Masked Paths
+
+If you want to hide certain files or directories entirely, you can mask them
+like this:
+
+```bash
+$ DEVSHELL_MASKED_PATHS=.git:a/b/My Secrets:docs devshell
+```
+
+For files, this will mount `/dev/null` in its place. For directories, a
+root-owned `tmpfs` volume will be mounted on top.
 
 ## Shared Container
 
