@@ -73,11 +73,12 @@ behaviour based on this.
 ## Home Volume
 
 You can persist the contents of the home directory `/home/user` in a docker
-volume. This is configured by the `DEVSHELL_HOME_VOLUME` environment variable,
-like this:
+volume or directory. This is configured by the `DEVSHELL_HOME_VOLUME`
+environment variable, like this:
 
 ```bash
 $ DEVSHELL_HOME_VOLUME=my-project-home devshell
+$ DEVSHELL_HOME_VOLUME=.local/home devshell
 ```
 
 The default value is `none`. If you like, you can edit the `devshell` script to
