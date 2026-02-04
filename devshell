@@ -19,6 +19,22 @@ container_name=${DEVSHELL_CONTAINER_NAME:-${default_container_name}}
 home_volume=${DEVSHELL_HOME_VOLUME:-${default_home_volume}}
 cache_enabled=${CACHE:-"yes"}
 
+### Check dependencies
+required_tools=("docker" "jq")
+missing_tools=()
+for tool in "${required_tools[@]}"; do
+  if ! command -v $tool >/dev/null; then
+    missing_tools+=($tool)
+  fi
+done
+if [[ ${#missing_tools[@]} > 0 ]]; then
+  echo >&2 "Please install the following and try again:"
+  for tool in "${missing_tools[@]}"; do
+    echo >&2 "* $tool"
+  done
+  exit 1
+fi
+
 ### Figure out if we need to rebuild the docker image
 
 image_source_files=(
