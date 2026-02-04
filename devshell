@@ -54,7 +54,10 @@ fi
 if [[ -v DEVSHELL_DOCKER_OPTS ]]; then
   docker_opts=($DEVSHELL_DOCKER_OPTS)
 else
-  docker_opts=("-it")
+  docker_opts=("-i")
+  if [[ -t 0 && -t 1 ]]; then
+    docker_opts+=("-t")
+  fi
 fi
 
 if [[ $# > 0 ]]; then
