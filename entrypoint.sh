@@ -30,10 +30,19 @@ HOME=/home/user
 mkdir -p $HOME
 chown $host_uid:$host_gid /home/user
 
-if [[ ! -f /etc/sudoers.d/user ]]; then
-  echo "$user_name ALL=(ALL:ALL) ALL" > /etc/sudoers.d/user
-  echo "Defaults lecture = never" > /etc/sudoers.d/lecture
-  echo "$user_name:secret" | chpasswd
+if [[ $host_uid == 0 ]]; then
+  # The container engine is likely remapping ids, so root _is_ our user and
+  # we'll just have to roll with it.
+  rm -rf /root
+  ln -s /home/user /root
+else
+  usermod -d /home/user $user_name
+
+  if [[ ! -f /etc/sudoers.d/user ]]; then
+    echo "$user_name ALL=(ALL:ALL) ALL" > /etc/sudoers.d/user
+    echo "Defaults lecture = never" > /etc/sudoers.d/lecture
+    echo "$user_name:secret" | chpasswd
+  fi
 fi
 
 exec setpriv \

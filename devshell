@@ -19,6 +19,17 @@ container_name=${DEVSHELL_CONTAINER_NAME:-${default_container_name}}
 home_volume=${DEVSHELL_HOME_VOLUME:-${default_home_volume}}
 cache_enabled=${CACHE:-"yes"}
 
+# Platform compatibility checks
+if stat -c %Y . &>/dev/null; then
+  # GNU
+  cmd_mtime="stat -c %Y"
+  cmd_date_iso_to_unix="date +%s -d"
+else
+  # MacOS
+  cmd_mtime="stat -f %m"
+  cmd_date_iso_to_unix="date -jf %Y-%m-%dT%H:%M:%S +%s"
+fi
+
 ### Check dependencies
 required_tools=("docker" "jq")
 missing_tools=()
@@ -44,7 +55,7 @@ image_source_files=(
 )
 image_source_mtime=$(
   for file in ${image_source_files[@]}; do
-    stat -c %Y $script_dir/$file
+    $cmd_mtime $script_dir/$file
   done \
   | sort -nr | head -n1
 )
@@ -53,7 +64,8 @@ image_name="${project_name}-devshell:${variant}"
 need_to_build="yes"
 
 if [[ $cache_enabled != "no" && -n $(docker images -q $image_name) ]]; then
-  image_mtime=$(docker image inspect $image_name | jq ".[0].Created" | xargs date +%s -d)
+  image_mtime=$(docker image inspect $image_name | jq -r ".[0].Created")
+  image_mtime=$($cmd_date_iso_to_unix ${image_mtime%%.*})
   if [[ $image_mtime -gt $image_source_mtime ]]; then
     need_to_build="no"
   fi
