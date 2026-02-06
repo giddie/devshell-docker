@@ -107,7 +107,7 @@ if [[ $container_name != "none" ]]; then
 fi
 
 if [[ ${container_id:-} ]]; then
-  exec docker exec $docker_opts $container_id /usr/local/bin/entrypoint.sh "${args[@]}"
+  exec docker exec "${docker_opts[@]}" $container_id /usr/local/bin/entrypoint.sh "${args[@]}"
 else
   if [[ $container_name != "none" ]]; then
     docker_opts+=("--name" ${container_name})
