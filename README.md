@@ -15,8 +15,9 @@ It's also intended to be simple and easy to customise.
 
 * Your **project directory** (from the git root) is available (read-write) in
   the container.
-* Runs as a **non-root user** with **sudo access**. A password is set, to avoid
-  tools switching to root without your knowledge. (The password is: `secret`.)
+* Runs as a **non-root user** with **sudo access** (if possible). A password is
+  set, to avoid tools switching to root without your knowledge. (The password is:
+  `secret`.)
 * Runs with the **same UID and GID** as your project root directory. (No
   root-owned files will appear in your project directory!)
 * Your project directory path is the **same inside and outside** the container.
@@ -130,6 +131,13 @@ $ DEVSHELL_SSH=yes devshell
 ```
 
 ## Sudo
+
+> [!NOTE]
+> Certain docker server implementations (such as Docker Desktop) will remap UIDs
+> in the container so that your UID outside the container is equivalent to root
+> inside the container. This can cause some tools to complain about being root.
+> The only way to avoid this is to configure your docker environment _not_ to
+> map your UID to root.
 
 By default you'll be able to invoke `sudo`, which will require the password
 `secret`. If you want to disable all privilege escalation, you can do:
