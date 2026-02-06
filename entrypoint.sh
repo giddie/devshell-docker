@@ -36,12 +36,12 @@ if [[ $host_uid == 0 ]]; then
   rm -rf /root
   ln -s /home/user /root
 else
-  usermod -d /home/user $user_name
-
   if [[ ! -f /etc/sudoers.d/user ]]; then
+    usermod -d /home/user $user_name
+    echo "$user_name:secret" | chpasswd
+
     echo "$user_name ALL=(ALL:ALL) ALL" > /etc/sudoers.d/user
     echo "Defaults lecture = never" > /etc/sudoers.d/lecture
-    echo "$user_name:secret" | chpasswd
   fi
 fi
 
