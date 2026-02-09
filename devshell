@@ -118,11 +118,16 @@ else
   fi
 
   if [[ ${DEVSHELL_SSH:-} == "yes" ]]; then
-    ssh_auth_sock=$(readlink -f ${SSH_AUTH_SOCK})
-    docker_opts+=(
-      "--volume" "${ssh_auth_sock}:${ssh_auth_sock}"
-      "--env" "SSH_AUTH_SOCK=${ssh_auth_sock}"
-    )
+    if ssh_auth_sock=$(readlink -f ${SSH_AUTH_SOCK} 2>/dev/null); then
+      docker_opts+=(
+        "--volume" "${ssh_auth_sock}:/run/ssh-agent.sock"
+        "--env" "SSH_AUTH_SOCK=/run/ssh-agent.sock"
+      )
+    else
+      echo >&2 "DEVSHELL_SSH: Ensure that SSH_AUTH_SOCK is set. You may need" \
+               "to set up ssh-agent."
+      exit 1
+    fi
   fi
 
   if [[ ${DEVSHELL_SUDO:-} == "no" ]]; then
