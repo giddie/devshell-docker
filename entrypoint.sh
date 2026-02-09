@@ -13,13 +13,13 @@ cd "$project_dir"
 host_uid=$(stat -c %u .)
 host_gid=$(stat -c %g .)
 
-group_name=$((getent group $host_gid || echo) | cut -d: -f1)
+group_name=$(getent group "$host_gid" | cut -d: -f1 || echo)
 if [[ ! $group_name ]]; then
   group_name=user
   groupadd -g $host_gid $group_name
 fi
 
-user_name=$((getent passwd $host_uid || echo) | cut -d: -f1)
+user_name=$(getent passwd "$host_uid" | cut -d: -f1 || echo)
 if [[ ! $user_name ]]; then
   user_name=user
   useradd -mg $host_gid -u $host_uid $user_name 2> /dev/null
