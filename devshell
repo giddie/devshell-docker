@@ -34,11 +34,11 @@ fi
 required_tools=("docker" "jq")
 missing_tools=()
 for tool in "${required_tools[@]}"; do
-  if ! command -v $tool >/dev/null; then
-    missing_tools+=($tool)
+  if ! command -v "$tool" >/dev/null; then
+    missing_tools+=("$tool")
   fi
 done
-if [[ ${#missing_tools[@]} > 0 ]]; then
+if (( ${#missing_tools[@]} > 0 )); then
   echo >&2 "Please install the following and try again:"
   for tool in "${missing_tools[@]}"; do
     echo >&2 "* $tool"
@@ -55,7 +55,7 @@ image_source_files=(
 )
 image_source_mtime=$(
   for file in ${image_source_files[@]}; do
-    $cmd_mtime $script_dir/$file
+    $cmd_mtime "$script_dir/$file"
   done \
   | sort -nr | head -n1
 )
@@ -74,7 +74,7 @@ fi
 if [[ $need_to_build == "yes" ]]; then
   echo "Building docker image..."
   no_cache=$([[ $cache_enabled == "no" ]] && echo "--no-cache" || echo)
-  docker build $no_cache -f $script_dir/$dockerfile -t $image_name $script_dir
+  docker build $no_cache -f "$script_dir/$dockerfile" -t "$image_name" "$script_dir"
 fi
 
 ### Options
@@ -88,10 +88,10 @@ else
   fi
 fi
 
-if [[ $# > 0 ]]; then
+if (( $# > 0 )); then
   args=("$@")
 else
-  args=("$default_args")
+  args=("${default_args[@]}")
 fi
 
 if [[ $container_name != "none" ]]; then
@@ -107,7 +107,7 @@ if [[ $container_name != "none" ]]; then
 fi
 
 if [[ ${container_id:-} ]]; then
-  exec docker exec "${docker_opts[@]}" $container_id /usr/local/bin/entrypoint.sh "${args[@]}"
+  exec docker exec "${docker_opts[@]}" "$container_id" /usr/local/bin/entrypoint.sh "${args[@]}"
 else
   if [[ $container_name != "none" ]]; then
     docker_opts+=("--name" ${container_name})

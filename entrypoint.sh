@@ -8,7 +8,7 @@ if [[ $project_dir == "" ]]; then
   exit 1
 fi
 
-cd $project_dir
+cd "$project_dir"
 
 host_uid=$(stat -c %u .)
 host_gid=$(stat -c %g .)
@@ -27,8 +27,8 @@ fi
 
 # It's helpful to use the same home directory regardless of base image.
 HOME=/home/user
-mkdir -p $HOME
-chown $host_uid:$host_gid /home/user
+mkdir -p "$HOME"
+chown "$host_uid:$host_gid" /home/user
 
 if [[ $host_uid == 0 ]]; then
   # The container engine is likely remapping ids, so root _is_ our user and
