@@ -19,7 +19,7 @@ container_name=${DEVSHELL_CONTAINER_NAME:-${default_container_name}}
 home_volume=${DEVSHELL_HOME_VOLUME:-${default_home_volume}}
 cache_enabled=${CACHE:-"yes"}
 
-# Platform compatibility checks
+### Platform compatibility checks
 if stat -c %Y . &>/dev/null; then
   # GNU
   cmd_mtime="stat -c %Y"
