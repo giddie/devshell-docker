@@ -151,8 +151,8 @@ else
   else
     IFS=':' read -r -a masked_paths <<< ${DEVSHELL_MASKED_PATHS}
   fi
-  for path_relative in "${masked_paths[@]}"; do
-    path="${base_dir}/${path_relative}"
+  for path in "${masked_paths[@]}"; do
+    [[ "$path" != /* ]] && path="${base_dir}/${path}"
     if [[ -f $path ]]; then
       docker_opts+=("--volume" "/dev/null:${path}")
     elif [[ -d $path ]]; then

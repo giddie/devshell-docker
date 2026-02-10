@@ -52,7 +52,7 @@ By default `docker run` (or `docker exec`) are provided with the `-it` flags
 override it like this:
 
 ```bash
-$ DEVSHELL_DOCKER_OPTS= devshell scripts/my-script
+$ DEVSHELL_DOCKER_OPTS="" devshell scripts/my-script
 $ DEVSHELL_DOCKER_OPTS="-i" devshell .local/bin/my-lsp
 ```
 
@@ -62,8 +62,8 @@ The default base image is ArchLinux, but you can choose a different one like
 this:
 
 ```bash
-$ DEVSHELL_VARIANT=alpine devshell
-$ DEVSHELL_VARIANT=ubuntu devshell
+$ DEVSHELL_VARIANT="alpine" devshell
+$ DEVSHELL_VARIANT="ubuntu" devshell
 ```
 
 You'll find a corresponding Dockerfile for each variant. Creating your own
@@ -78,8 +78,8 @@ volume or directory. This is configured by the `DEVSHELL_HOME_VOLUME`
 environment variable, like this:
 
 ```bash
-$ DEVSHELL_HOME_VOLUME=my-project-home devshell
-$ DEVSHELL_HOME_VOLUME=.local/home devshell
+$ DEVSHELL_HOME_VOLUME="my-project-home" devshell
+$ DEVSHELL_HOME_VOLUME=".local/home" devshell
 ```
 
 The default value is `none`. If you like, you can edit the `devshell` script to
@@ -94,8 +94,8 @@ to your git repo or local tools. You can disable this, or set any number of
 subdirectories to be read-only, like this:
 
 ```bash
-$ DEVSHELL_RO_PATHS= devshell
-$ DEVSHELL_RO_PATHS=.git:a/b/My Secrets:docs devshell
+$ DEVSHELL_RO_PATHS="" devshell
+$ DEVSHELL_RO_PATHS=".git:a/b/My" Secrets:docs devshell
 ```
 
 ## Masked Paths
@@ -104,11 +104,12 @@ If you want to hide certain files or directories entirely, you can mask them
 like this:
 
 ```bash
-$ DEVSHELL_MASKED_PATHS=.git:a/b/My Secrets:docs devshell
+$ DEVSHELL_MASKED_PATHS=".git:a/b/My Secrets:docs:/proc" devshell
 ```
 
 For files, this will mount `/dev/null` in its place. For directories, a
-root-owned `tmpfs` volume will be mounted on top.
+root-owned `tmpfs` volume will be mounted on top. Relative paths are relative to
+the project root. Absolute paths are supported too.
 
 ## Shared Container
 
