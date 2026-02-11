@@ -283,62 +283,49 @@ simplest approach is to provide access to the host docker socket.
 Running the [observer](https://www.erlang.org/doc/apps/observer/observer_ug)
 tool in a container can be tricky, due to an X server not being available.
 Fortunately, thanks to BEAM clustering we can simply run the Observer on the
-host, and then connect to the node inside the container.
+host, and connect to the host from inside the container.
 
-First, we create a script that runs our node inside the container.
-
-* We give the container a name so we can look up its IP later.
-* We need to know the IP of the container before we start our node. That's what
-  the `ip=` line is doing.
-* We need to tell docker to publish two ports (EPMD and the distribution port),
-  but this is just so docker will open up the ports. We'll be connecting
-  directly to the container IP, not the docker host. We don't care about
-  which host port is mapped, so we don't specify one. (Docker will choose one.)
-* The EPMD port is always 4369 by default, but we need to use the
-  `inet_dist_...` options to ask the VM to use a specific distribution port, so
-  we know which one to publish (4370).
+First, we create a script to run a node on the host with a specific name:
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEVSHELL_DOCKER_OPTS="-it --name my-main-node -p 4369 -p 4370" \
-  devshell bash -c "\
-    ip=\$(ip -4 addr show eth0 | grep inet | head -n1 | xargs echo | cut -d' ' -f2 | cut -d/ -f1);
-    iex \
-      --name main@\$ip \
-      --cookie my-secret-cookie \
-      --erl \"-kernel inet_dist_listen_min 4370\"\
-      --erl \"-kernel inet_dist_listen_max 4370\"\
-      -S mix
-  "
-```
-
-And then, we can create a script that spawns a node on the host, connects to our
-main node, and launches the observer:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-node_ip=$(
-  docker container inspect my-main-node -f '{{json .NetworkSettings}}' \
-    | jq -r '.Networks[].IPAddress' \
-    | head -n1
-)
-
-iex \
-  --name host@localhost \
+distribution_port=4370
+exec iex \
+  --name observer@host.docker.internal \
   --hidden \
   --cookie my-secret-cookie \
-  -e "Node.connect(:'main@${node_ip}'); :observer.start"
+  --erl "-kernel inet_dist_listen_min ${distribution_port}" \
+  --erl "-kernel inet_dist_listen_max ${distribution_port}"
 ```
 
-And then click through: `Nodes` -> `main@...`.
+Then we create a script to run a regular node inside the devshell, which
+connects to our host:
 
-Note that clustering _between_ containers is a little simpler: so long as they are
-connected to the same docker network, you can rely on DNS to resolve container
-names instead of figuring out IPs.
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+export DEVSHELL_DOCKER_OPTS="-it --add-host host.docker.internal:host-gateway"
+host_atom=':"observer@host.docker.internal"'
+exec devshell iex \
+  --name main@localhost \
+  --cookie my-secret-cookie \
+  -S mix run \
+  -e "Node.connect(${host_atom}); :erpc.call(${host_atom}, :observer, :start, [])"
+```
+
+After running the second script, Observer should appear on the host. You can
+then click through: `Nodes` -> `main@localhost`.
+
+* The `--add-host ...:host-gateway` switch ensures the container can resolve the
+  host IP using the specified domain name. It's important for this to match the
+  name used in the first script or EPMD will reject the connection.
+* By defining a static distribution port in the first script, we give ourselves
+  the option to use ssh port forwarding to forward the connection onward, so we
+  don't even have to run Observer on the actual docker host. Forward ports 4369
+  (EPMD) and 4370 (distribution port).
 
 # Known Issues
 
