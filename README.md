@@ -5,7 +5,7 @@ and to expose a clean system environment to the wrapped tools to avoid
 unpleasant version conflicts and similar complications.
 
 ```
-$ devshell cargo build
+$ devshell make
 ...        <-- Everything compiles inside a temporary container
 ```
 
@@ -70,6 +70,15 @@ You'll find a corresponding Dockerfile for each variant. Creating your own
 should be pretty straightforward. There is also a `DEVSHELL_VARIANT` environment
 variable available inside the container for any scripts that may want to switch
 behaviour based on this.
+
+## Rebuild / Update
+
+You may want to force a rebuild of the image, to take advantage of any updates
+in the base image or packages. You can do that like this:
+
+```
+$ CACHE=no devshell
+```
 
 ## Home Volume
 
@@ -326,19 +335,3 @@ then click through: `Nodes` -> `main@localhost`.
   the option to use ssh port forwarding to forward the connection onward, so we
   don't even have to run Observer on the actual docker host. Forward ports 4369
   (EPMD) and 4370 (distribution port).
-
-# Known Issues
-
-## It tries to rebuild the image each time I launch the devshell!
-
-This happens when docker has figured out that your source files match an
-image that it already built previously, such as when you saved a change and
-subsequently reverted it. Because the image timestamp is older than the source
-files, the devshell script can't tell that it doesn't in fact need to be
-rebuilt.
-
-You can fix it by forcing the image to be fully rebuilt like this:
-
-```
-# CACHE=no devshell
-```

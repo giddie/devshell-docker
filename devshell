@@ -19,19 +19,8 @@ container_name=${DEVSHELL_CONTAINER_NAME:-${default_container_name}}
 home_volume=${DEVSHELL_HOME_VOLUME:-${default_home_volume}}
 cache_enabled=${CACHE:-"yes"}
 
-### Platform compatibility checks
-if stat -c %Y . &>/dev/null; then
-  # GNU
-  cmd_mtime="stat -c %Y"
-  cmd_date_iso_to_unix="date +%s -d"
-else
-  # MacOS
-  cmd_mtime="stat -f %m"
-  cmd_date_iso_to_unix="date -jf %Y-%m-%dT%H:%M:%S +%s"
-fi
-
 ### Check dependencies
-required_tools=("docker" "jq")
+required_tools=("docker" "jq" "sha256sum")
 missing_tools=()
 for tool in "${required_tools[@]}"; do
   if ! command -v "$tool" >/dev/null; then
@@ -53,20 +42,22 @@ image_source_files=(
   entrypoint.sh
   entrypoint-user.sh
 )
-image_source_mtime=$(
+image_source_hash=$(
   for file in ${image_source_files[@]}; do
-    $cmd_mtime "$script_dir/$file"
-  done \
-  | sort -nr | head -n1
+    cat "$script_dir/$file"
+  done | sha256sum
 )
+image_source_hash=${image_source_hash%% *}
 
 image_name="${project_name}-devshell:${variant}"
 need_to_build="yes"
 
 if [[ $cache_enabled != "no" && -n $(docker images -q $image_name) ]]; then
-  image_mtime=$(docker image inspect $image_name | jq -r ".[0].Created")
-  image_mtime=$($cmd_date_iso_to_unix ${image_mtime%%.*})
-  if [[ $image_mtime -gt $image_source_mtime ]]; then
+  image_source_hash_label=$(
+    docker image inspect $image_name | \
+      jq -r '.[0].Config.Labels."org.opencontainers.image.devshell.source-hash"'
+  )
+  if [[ $image_source_hash_label == $image_source_hash ]]; then
     need_to_build="no"
   fi
 fi
@@ -74,7 +65,12 @@ fi
 if [[ $need_to_build == "yes" ]]; then
   echo "Building docker image..."
   no_cache=$([[ $cache_enabled == "no" ]] && echo "--no-cache" || echo)
-  docker build $no_cache -f "$script_dir/$dockerfile" -t "$image_name" "$script_dir"
+  docker build \
+    $no_cache \
+    --file "$script_dir/$dockerfile" \
+    --build-arg SOURCE_HASH="${image_source_hash}" \
+    --tag "$image_name" \
+    "$script_dir"
 fi
 
 ### Options
