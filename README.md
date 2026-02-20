@@ -104,7 +104,7 @@ subdirectories to be read-only, like this:
 
 ```bash
 $ DEVSHELL_RO_PATHS="" devshell
-$ DEVSHELL_RO_PATHS=".git:a/b/My" Secrets:docs devshell
+$ DEVSHELL_RO_PATHS=".git:a/b/My Secrets:docs" devshell
 ```
 
 ## Masked Paths
