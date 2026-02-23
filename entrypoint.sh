@@ -28,7 +28,10 @@ fi
 # It's helpful to use the same home directory regardless of base image.
 HOME=/home/user
 mkdir -p "$HOME"
-chown "$host_uid:$host_gid" /home/user
+chown "$host_uid:$host_gid" "$HOME"
+if [[ $(getent passwd "$user_name" | cut -d: -f6 || echo) != $HOME ]]; then
+  usermod -d "$HOME" "$user_name"
+fi
 
 if [[ $host_uid == 0 ]]; then
   # The container engine is likely remapping ids, so root _is_ our user and
@@ -37,9 +40,7 @@ if [[ $host_uid == 0 ]]; then
   ln -s /home/user /root
 else
   if [[ ! -f /etc/sudoers.d/user ]]; then
-    usermod -d /home/user $user_name
     echo "$user_name:secret" | chpasswd
-
     echo "$user_name ALL=(ALL:ALL) ALL" > /etc/sudoers.d/user
     echo "Defaults !lecture" > /etc/sudoers.d/lecture
   fi
