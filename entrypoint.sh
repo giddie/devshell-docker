@@ -41,7 +41,7 @@ else
     echo "$user_name:secret" | chpasswd
 
     echo "$user_name ALL=(ALL:ALL) ALL" > /etc/sudoers.d/user
-    echo "Defaults lecture = never" > /etc/sudoers.d/lecture
+    echo "Defaults !lecture" > /etc/sudoers.d/lecture
   fi
 fi
 

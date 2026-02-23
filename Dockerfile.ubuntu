@@ -1,4 +1,4 @@
-FROM ubuntu AS dev
+FROM ubuntu:rolling AS dev
 
 RUN apt-get update -qq
 
