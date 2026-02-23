@@ -9,7 +9,7 @@ project_name="general"
 default_variant="archlinux"
 default_container_name="none"
 default_home_volume="none"
-default_args=("/usr/bin/zsh")
+default_args=("/usr/bin/env" "zsh")
 default_ro_paths=(".git" ".local")
 default_masked_paths=()
 
