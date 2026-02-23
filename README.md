@@ -58,12 +58,12 @@ $ DEVSHELL_DOCKER_OPTS="-i" devshell .local/bin/my-lsp
 
 ## Variants
 
-The default base image is ArchLinux, but you can choose a different one like
+The default base image is Ubuntu, but you can choose a different one like
 this:
 
 ```bash
 $ DEVSHELL_VARIANT="alpine" devshell
-$ DEVSHELL_VARIANT="ubuntu" devshell
+$ DEVSHELL_VARIANT="archlinux" devshell
 ```
 
 You'll find a corresponding Dockerfile for each variant. Creating your own
