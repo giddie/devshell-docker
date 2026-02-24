@@ -20,6 +20,10 @@ home_volume=${DEVSHELL_HOME_VOLUME:-${default_home_volume}}
 cache_enabled=${CACHE:-"yes"}
 
 ### Check dependencies
+if (( BASH_VERSINFO[0] < 5 )); then
+  echo >&2 "WARNING: Your bash version is quite old."
+fi
+
 required_tools=("docker" "jq" "sha256sum")
 missing_tools=()
 for tool in "${required_tools[@]}"; do
