@@ -82,7 +82,7 @@ fi
 if [[ -v DEVSHELL_DOCKER_OPTS ]]; then
   docker_opts=($DEVSHELL_DOCKER_OPTS)
 else
-  docker_opts=("-i")
+  docker_opts=("-i" "--init")
   if [[ -t 0 && -t 1 ]]; then
     docker_opts+=("-t")
   fi
